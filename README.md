@@ -1,66 +1,86 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+Starfinx Payments – Project Guide
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 11 + Laravel Backpack | Pay-in & Payout Module
 
-## About Laravel
+Project Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Laravel 11 + Laravel Backpack based Pay-in and Payout backend module.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Includes Merchants, Wallet/Balance, Pay-ins, Payouts, APIs, scheduled processing, validation, logging and Backpack CRUD.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Technology Stack
 
-## Learning Laravel
+Laravel 11
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Laravel Backpack
 
-## Laravel Sponsors
+Eloquent ORM
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Laravel Scheduler and Artisan Commands
 
-### Premium Partners
+Postman
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
 
-## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+API Endpoints:
 
-## Code of Conduct
+POST /api/v1/payin — example JSON: { "merchant_id": 1, "amount": 500 }
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+POST /api/v1/payout — example JSON: { "merchant_id": 1, "amount": 200 }
 
-## Security Vulnerabilities
+API requests validate merchant_id and amount. New payments are created with PENDING status.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Pay-in Flow
 
-## License
+API request → Form Request validation → PaymentService → unique PAYIN transaction ID → PENDING record.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+php artisan payments processes pending records.
+
+SUCCESS credits the merchant wallet; FAILED leaves the wallet unchanged; PENDING remains eligible for a later run.
+
+Payout Flow
+
+API request → validation → PaymentService → unique PAYOUT transaction ID → PENDING record.
+
+On SUCCESS, wallet is debited after sufficient-balance check.
+
+Insufficient balance results in FAILED and the wallet is not made negative.
+
+Payment Processing Command
+
+Manual processing: php artisan payments
+
+The command processes pending pay-ins and payouts and records status/payment details.
+
+Scheduler:
+
+Local continuous scheduler: php artisan schedule
+
+Configured scheduled task: payments every minute.
+
+
+Wallet & Duplicate Safety
+
+Wallet changes happen inside a database transaction.
+
+lockForUpdate() protects relevant payment and wallet rows during processing.
+
+Only PENDING records are eligible, and status is rechecked after locking.
+
+This prevents duplicate credit/debit processing under concurrent execution.
+
+Logging
+
+Initiation logs transaction ID, merchant ID and amount.
+
+Processing logs status changes, errors and insufficient-balance cases.
+
+Backpack Admin
+
+CRUD pages are provided for Merchants, Pay-ins, Payouts and Wallet/Balance.
+
+Admin pages allow transaction and balance review and basic filtering.
+
+
